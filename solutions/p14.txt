@@ -1,0 +1,148 @@
+import java.io.File;  // Import the File class
+import java.io.FileNotFoundException;  // Import this class to handle errors
+import java.util.*;
+import javafx.util.Pair;
+import java.util.Collections;
+import java.lang.Math;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class p14 {
+
+    public static String reverseString(String str) {
+        StringBuffer sb = new StringBuffer(str);
+        sb.reverse();
+        return new String(sb);
+    }
+
+    public static String convertToBinary(Integer n) {
+        if (n == 0) {
+            return "0";
+        }
+        
+        String val = "";
+        while (n != 0) {
+            Integer r = n % 2;
+            n = n / 2;
+            val = val.concat(r.toString());
+        }
+        val = reverseString(val);
+        return val;
+    }
+
+    public static Long convertToLong(String val) {
+        Long curr = 0l;
+        for (Character c : val.toCharArray()) {
+            curr = (c == '1') ? (curr * 2 + 1) : curr * 2;
+
+        }
+        return curr;
+    }
+
+    public static List<String> enumerateFloating(String str) {
+        List<Integer> indices = new ArrayList<>();
+        int idx = 0;
+        String mask = "";
+        for (Character c : str.toCharArray()) {
+            if (c == 'X') {
+                indices.add(idx);
+                mask = mask.concat("X");
+            }
+            idx += 1;
+        }
+
+        List<String> memories = new ArrayList<>();
+        for (int i = 0; i < Math.pow(2, indices.size()); i++) {
+            String memory = applyMask(convertToBinary(i), mask);
+            int pending = 0;
+            String location = "";
+            for (int j = 0; j < str.length(); j++) {
+                if (indices.contains(j)) {
+                    location = location.concat(memory.substring(pending, pending + 1));
+                    pending += 1;
+                } else {
+                    location = location.concat(str.substring(j, j+1));
+                }
+            }
+            memories.add(convertToLong(location).toString()); // int value?
+        }
+        return memories;
+    }
+
+    // v1 mask
+    public static String applyMask(String val, String mask) {
+        mask = reverseString(mask);
+        val = reverseString(val);
+        String masked = "";
+        for (int i = 0; i < mask.length(); i++) {
+            if (mask.charAt(i) == 'X') {
+                masked = (i < val.length()) ? masked.concat(val.substring(i, i+1)) : masked.concat("0");
+            } else {
+                masked = masked.concat(mask.substring(i, i+1));
+            }
+        }
+        masked = reverseString(masked);
+        return masked;
+    }
+
+    // v2 mask
+    public static List<String> applyUpdatedMask(String val, String mask) {
+        mask = reverseString(mask);
+        val = reverseString(val);
+        String masked = "";
+        for (int i = 0; i < mask.length(); i++) {
+            if (mask.charAt(i) == 'X') {
+                masked = masked.concat("X");
+            } else if (mask.charAt(i) == '0') {
+                masked = (i < val.length()) ? masked.concat(val.substring(i, i+1)) : masked.concat("0");
+            } else {
+                masked = masked.concat("1");
+            }
+        }
+        masked = reverseString(masked);
+        return enumerateFloating(masked);
+    }
+    
+    public static void main(String[] args) {
+        List<List<String>> in = new ArrayList<>();
+        List<String> maskSet = new ArrayList<>();
+        try {
+            File myObj = new File("p14_in.txt");
+            Scanner scanner = new Scanner(myObj);
+            while (scanner.hasNextLine()) {
+                String ln = scanner.nextLine();
+                if (ln.contains("mask")) {
+                    if (maskSet.size() > 0) {
+                        in.add(maskSet);
+                    }
+                    maskSet = new ArrayList<>();
+                }
+                maskSet.add(ln);
+            }
+            scanner.close();
+            in.add(maskSet);
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found.");
+            e.printStackTrace();
+        }
+        
+        Map<String, String> mem = new HashMap<>();
+        for (List<String> set : in) {
+            String maskStr = set.get(0).split("mask = ")[1];
+            for (int idx = 1; idx < set.size(); idx++) {
+                String[] memStr = set.get(idx).split("\\]");
+                String memKey = memStr[0].split("mem\\[")[1];
+                String memValue = memStr[1].split(" = ")[1];
+                String binVal = convertToBinary(Integer.parseInt(memKey)); // v2 uses key instead of val.
+                for (String k : applyUpdatedMask(binVal, maskStr)) {
+                    mem.put(k, convertToBinary(Integer.parseInt(memValue)));
+                }
+            }
+        }
+
+        Long sum = 0l;
+        for (Map.Entry<String, String> entry : mem.entrySet()) {
+            sum += convertToLong(entry.getValue());
+        }
+        System.out.println(sum);
+    }
+}
