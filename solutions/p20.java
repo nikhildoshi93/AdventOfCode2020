@@ -303,32 +303,69 @@ public class p20 {
         return monster;
     }
 
+    public static List<Pair<Integer, Integer>> allMatches(String text, String regex)
+    {
+        List<Pair<Integer, Integer>> out = new ArrayList<>();
+      Matcher m = Pattern.compile(regex).matcher(text);
+      int end = text.length();
+      for (int i = 0; i < end; ++i)
+      {
+        for (int j = i + 1; j <= end; ++j) 
+        {
+          m.region(i, j);
+
+          if (m.find()) 
+          {   
+            if (j - i == 20) {
+                out.add(new Pair(i, j));
+            }
+          }   
+        }   
+      }   
+      return out;
+    }
+
     public static List<String> countMonsters(List<String> monster, List<String> square) {
         
         int count = 0;
         Pattern pattern1 = Pattern.compile(monster.get(1));
         Pattern pattern2 = Pattern.compile(monster.get(2));
+        int t = 0;
         for (int i = 1; i < square.size() - 1; i++) {
             int block = 0;
             Matcher midMatcher = pattern1.matcher(square.get(i));
-            while(midMatcher.find()) {
-                int start = midMatcher.start();
-                int end = midMatcher.end();
-                if (start <= block) {
-                    continue; // block
-                }
 
-                Matcher endMatcher = pattern2.matcher(square.get(i+1));
-                while(endMatcher.find()) {
-                    int start2 = endMatcher.start();
-                    int end2 = endMatcher.end();
+            List<Pair<Integer, Integer>> midMatches = allMatches(square.get(i), monster.get(1));
+            for (Pair<Integer, Integer> pr0 : midMatches) {
+                int start = pr0.getKey();
+                int end = pr0.getValue();
+            // while(midMatcher.find()) {
+            //     int start = midMatcher.start();
+            //     int end = midMatcher.end();
+                t+=1;
+                
+                // if (start <= block) {
+                //     continue; // block
+                // }
 
-                    if (end2 > end) {
-                        break;
-                    }
+                // Matcher endMatcher = pattern2.matcher(square.get(i+1));
+                boolean done = false;
+                List<Pair<Integer, Integer>> endMatches = allMatches(square.get(i+1), monster.get(2));
+                for (Pair<Integer, Integer> pr : endMatches) {
+                // while(endMatcher.find()) {
+                    // int start2 = endMatcher.start();
+                    // int end2 = endMatcher.end();
+
+                    int start2 = pr.getKey();
+                    int end2 = pr.getValue();
+
+                    // if (end2 > end) {
+                    //     break;
+                    // }
 
                     if (end2 == end) {
                         if (square.get(i-1).charAt(end - 2) == '#') {
+                            done = true;
                             count += 1;
                             block = end-1;
 
@@ -336,10 +373,10 @@ public class p20 {
                                 for (int y = start; y < end; y++) {
                                     StringBuilder st = new StringBuilder(square.get(i - 1 + x));
                                     if (st.charAt(y) == '#') {
-                                        if (!(monster.get(x).charAt(y - start) == '.')) {
-                                            st.setCharAt(y, '0');
-                                        } else {
+                                        if (monster.get(x).charAt(y - start) == '.') {
                                             st.setCharAt(y, '1');
+                                        } else {
+                                            st.setCharAt(y, '0');
                                         }
                                     } else {
                                         st.setCharAt(y, '0');
@@ -412,8 +449,8 @@ public class p20 {
         for (int i = 0; i < megaSquare.size(); i++) {
             count1 += megaSquare.get(i).chars().filter(ch -> ch == '1').count();
             count2 += megaSquare.get(i).chars().filter(ch -> ch == '#').count();
-            System.out.println(megaSquare.get(i));
+            // System.out.println(megaSquare.get(i));
         }
-        System.out.println(count1+count2);
+        System.out.println(count1+count2); // 2161
     }
 }
